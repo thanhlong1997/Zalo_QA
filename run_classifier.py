@@ -49,7 +49,7 @@ input=os.path.join('/../../input')
 output='/../../output'
 bert_path=os.path.join(input,'multi_cased_L-12_H-768_A-12')
 print(bert_path)
-# project_path='./drive/My Drive/AI_COLAB/BERT_tensor'
+project_path=base
 root_path = base
 # os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
