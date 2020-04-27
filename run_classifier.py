@@ -44,9 +44,9 @@ print(base)
 #     # root_path = '/home/linhlt/Levi/chatbot_platform_nlp'
 # bert_path = 'gs://test_bucket_share_1/uncased_L-12_H-768_A-12'
 # input=os.path.join(base,'/../../input')
-input=os.path.join(base,'/../../input')
+input='input'
 # output=os.path.join(base,'/../../output')
-output=os.path.join(base,'/../../output')
+output='output'
 bert_path=os.path.join(input,'multi_cased_L-12_H-768_A-12')
 print(bert_path)
 project_path=base
