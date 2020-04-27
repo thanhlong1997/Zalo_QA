@@ -43,10 +43,10 @@ print(base)
 #     # bert_path = '/home/linhlt/matt/bert_ner/bert-models/multi_cased_L-12_H-768_A-12'
 #     # root_path = '/home/linhlt/Levi/chatbot_platform_nlp'
 # bert_path = 'gs://test_bucket_share_1/uncased_L-12_H-768_A-12'
-input=os.path.join(base,'/../input/bertpretrained')
-# input='input/bertpretrained'
-output=os.path.join(base,'/../output')
-# output='output'
+# input=os.path.join(base,'/../input/bertpretrained')
+input='/kaggle/input'
+# output=os.path.join(base,'/../output')
+output='/kaggle/output'
 bert_path=os.path.join(input,'multi_cased_L-12_H-768_A-12/multi_cased_L-12_H-768_A-12')
 print(bert_path)
 project_path=base
