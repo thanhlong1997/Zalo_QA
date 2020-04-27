@@ -47,7 +47,7 @@ print(base)
 input='input/bertpretrained'
 # output=os.path.join(base,'/../../output')
 output='output'
-bert_path=os.path.join(input,'multi_cased_L-12_H-768_A-12')
+bert_path=os.path.join(input,'multi_cased_L-12_H-768_A-12/multi_cased_L-12_H-768_A-12')
 print(bert_path)
 project_path=base
 root_path = base
