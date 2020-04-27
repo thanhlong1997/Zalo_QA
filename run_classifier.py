@@ -44,12 +44,12 @@ print(base)
 #     # root_path = '/home/linhlt/Levi/chatbot_platform_nlp'
 # bert_path = 'gs://test_bucket_share_1/uncased_L-12_H-768_A-12'
 # input=os.path.join(base,'/../../input')
-input='./drive/My Drive/AI_COLAB'
+input=os.path.join('/../../input')
 # output=os.path.join(base,'/../../output')
-output='./drive/My Drive/AI_COLAB/model_trained'
+output='/../../output'
 bert_path=os.path.join(input,'multi_cased_L-12_H-768_A-12')
 print(bert_path)
-project_path='./drive/My Drive/AI_COLAB/BERT_tensor'
+# project_path='./drive/My Drive/AI_COLAB/BERT_tensor'
 root_path = base
 # os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
@@ -91,7 +91,7 @@ flags.DEFINE_boolean('clean', True, 'remove the files which created by last trai
 
 flags.DEFINE_bool("do_train", True, "Whether to run training.")
 
-flags.DEFINE_bool("use_tpu", False, "Whether to use TPU or GPU/CPU.")
+flags.DEFINE_bool("use_tpu", True, "Whether to use TPU or GPU/CPU.")
 flags.DEFINE_string(
     "tpu_name",'grpc://10.0.0.2:8470' ,
     "The Cloud TPU to use for training. This should be either the name "
@@ -114,11 +114,11 @@ flags.DEFINE_bool("do_eval",True, "Whether to run eval on the dev set.")
 
 flags.DEFINE_bool("do_predict",False, "Whether to run the model in inference mode on the test set.")
 
-flags.DEFINE_integer("train_batch_size", 4, "Total batch size for training.")
+flags.DEFINE_integer("train_batch_size", 8, "Total batch size for training.")
 
-flags.DEFINE_integer("eval_batch_size", 4, "Total batch size for eval.")
+flags.DEFINE_integer("eval_batch_size", 8, "Total batch size for eval.")
 
-flags.DEFINE_integer("predict_batch_size", 4, "Total batch size for predict.")
+flags.DEFINE_integer("predict_batch_size", 8, "Total batch size for predict.")
 
 flags.DEFINE_float("learning_rate", 5e-5, "The initial learning rate for Adam.")
 
@@ -141,7 +141,7 @@ flags.DEFINE_string("vocab_file", os.path.join(bert_path, 'vocab.txt'),
 
 flags.DEFINE_string("master", None, "[Optional] TensorFlow master URL.")
 flags.DEFINE_integer(
-    "num_tpu_cores", 1,
+    "num_tpu_cores", 8,
     "Only used if `use_tpu` is True. Total number of TPU cores to use.")
 flags.DEFINE_string('data_config_path', os.path.join(project_path, 'data.conf'),
                     'data config file, which save train and dev config')
