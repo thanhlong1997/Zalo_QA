@@ -20,8 +20,8 @@ from __future__ import print_function
 
 import collections
 import os
-import modeling
-import optimization
+import modeling_tf2
+import optimization_tf2
 import tokenization
 import tensorflow as tf
 import pandas as pd
