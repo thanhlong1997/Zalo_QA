@@ -583,12 +583,12 @@ def create_model(bert_config, is_training, input_ids, input_mask, segment_ids,
     print('FIRST TOKEN TENSOR SHAPE: ', first_token_tensor.shape)
     print("SECOND TOKEN TENSOR SHAPE: ", second_token_tensor.shape)
     # second_token_tensor = tf.squeeze(sequence_output[:, second_sentence_pos:second_sentence_pos+1, :], axis=1)
-    first_ebeding= tf.layers.dense(
+    first_ebeding= tf.compat.v1.layers.dense(
             first_token_tensor,
             bert_config.hidden_size,
             activation=tf.tanh,
             kernel_initializer=tf.truncated_normal_initializer(bert_config.initializer_range))
-    second_ebeding= tf.layers.dense(
+    second_ebeding= tf.compat.v1.layers.dense(
             second_token_tensor,
             bert_config.hidden_size,
             activation=tf.tanh,
