@@ -850,7 +850,7 @@ def main():
   if FLAGS.do_train:
     processor = processors[task_name]()
     label_list = processor.get_labels()
-    tf.gfile.MakeDirs(FLAGS.output_dir)
+    tf.io.gfile.MakeDirs(FLAGS.output_dir)
     train_examples = processor.get_train_examples(FLAGS.data_dir)
     num_train_steps = int(
         len(train_examples) / FLAGS.train_batch_size * FLAGS.num_train_epochs)
