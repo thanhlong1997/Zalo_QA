@@ -434,14 +434,14 @@ def convert_single_example(ex_index, example:InputExample, label_list, max_seq_l
   #   print(label_map)
   #   1/0
   if ex_index < 5:
-    tf.logging.info("*** Example ***")
-    tf.logging.info("guid: %s" % (example.guid))
-    tf.logging.info("tokens: %s" % " ".join(
+    tf.compat.v1.logging.info("*** Example ***")
+    tf.compat.v1.logging.info("guid: %s" % (example.guid))
+    tf.compat.v1.logging.info("tokens: %s" % " ".join(
         [tokenization.printable_text(x) for x in tokens]))
-    tf.logging.info("input_ids: %s" % " ".join([str(x) for x in input_ids]))
-    tf.logging.info("input_mask: %s" % " ".join([str(x) for x in input_mask]))
-    tf.logging.info("segment_ids: %s" % " ".join([str(x) for x in segment_ids]))
-    tf.logging.info("label: %s (id = %d)" % (example.labels, label_ids))
+    tf.compat.v1.logging.info("input_ids: %s" % " ".join([str(x) for x in input_ids]))
+    tf.compat.v1.logging.info("input_mask: %s" % " ".join([str(x) for x in input_mask]))
+    tf.compat.v1.logging.info("segment_ids: %s" % " ".join([str(x) for x in segment_ids]))
+    tf.compat.v1.logging.info("label: %s (id = %d)" % (example.labels, label_ids))
 
   feature = InputFeatures(
       input_ids=input_ids,
