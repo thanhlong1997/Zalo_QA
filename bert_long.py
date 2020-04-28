@@ -353,8 +353,7 @@ def convert_to_k_hot(labels, num_labels):
             labels_.append(0)
     return labels_
 
-def convert_single_example( example:InputExample, label_list, max_seq_length,
-                           tokenizer):
+def convert_single_example( example:InputExample, label_list, max_seq_length,tokenizer):
   """Converts a single `InputExample` into a single `InputFeatures`."""
   label_map = {}
   for (i, label) in enumerate(label_list):
