@@ -18,21 +18,25 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import numpy as np
+
 import collections
 import os
-import modeling_tf2
-import optimization_tf2
+import modeling
+import optimization
 import tokenization
 import tensorflow as tf
 import pandas as pd
-import json
+import pickle
+import unicodedata
+from sklearn.metrics import accuracy_score, f1_score
+import random
 
-# import pickle
-# import nltk
-# import re
-flags = tf.compat.v1.flags
+flags = tf.flags
 
 FLAGS = flags.FLAGS
+
+## Required parameters
 base=os.path.dirname(__file__)
 print(base)
 ## Required parameters
@@ -43,18 +47,18 @@ print(base)
 #     # bert_path = '/home/linhlt/matt/bert_ner/bert-models/multi_cased_L-12_H-768_A-12'
 #     # root_path = '/home/linhlt/Levi/chatbot_platform_nlp'
 # bert_path = 'gs://test_bucket_share_1/uncased_L-12_H-768_A-12'
-# input=os.path.join(base,'/../input/bertpretrained')
-input='/kaggle/input/bertpretrained'
-# output=os.path.join(base,'/../output')
-output='/kaggle/output'
-bert_path=os.path.join(input,'multi_cased_L-12_H-768_A-12/multi_cased_L-12_H-768_A-12')
+# input=os.path.join(base,'/../../input')
+input='./drive/My Drive/AI_COLAB'
+# output=os.path.join(base,'/../../output')
+output='./drive/My Drive/AI_COLAB/model_trained'
+bert_path=os.path.join(input,'uncased_L-12_H-768_A-12')
 print(bert_path)
-project_path=base
+project_path='./drive/My Drive/AI_COLAB/BERT_tensor'
 root_path = base
 # os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
 flags.DEFINE_string(
-    "data_dir", os.path.join(root_path, 'data'),
+    "data_dir", os.path.join(project_path, 'longquora'),
     "The input datadir.",
 )
 flags.DEFINE_string(
@@ -67,7 +71,7 @@ flags.DEFINE_string(
 )
 
 flags.DEFINE_string(
-    "output_dir",os.path.join(output,'model_zalo'),
+    "output_dir",os.path.join(output,'model_2_20_2'),
     "The output directory where the model checkpoints will be written."
 )
 
@@ -83,7 +87,7 @@ flags.DEFINE_bool(
 )
 
 flags.DEFINE_integer(
-    "max_seq_length", 128,
+    "max_seq_length", 512,
     "The maximum total input sequence length after WordPiece tokenization."
 )
 
@@ -92,37 +96,38 @@ flags.DEFINE_boolean('clean', True, 'remove the files which created by last trai
 flags.DEFINE_bool("do_train", True, "Whether to run training.")
 
 flags.DEFINE_bool("use_tpu", False, "Whether to use TPU or GPU/CPU.")
-flags.DEFINE_string(
-    "tpu_name",'grpc://10.0.0.2:8470' ,
+
+tf.flags.DEFINE_string(
+    "tpu_name",'grpc://10.46.171.90:8470' ,
     "The Cloud TPU to use for training. This should be either the name "
     "used when creating the Cloud TPU, or a grpc://ip.address.of.tpu:8470 "
     "url.")
 
-flags.DEFINE_string(
+tf.flags.DEFINE_string(
     "tpu_zone", None,
     "[Optional] GCE zone where the Cloud TPU is located in. If not "
     "specified, we will attempt to automatically detect the GCE project from "
     "metadata.")
 
-flags.DEFINE_string(
+tf.flags.DEFINE_string(
     "gcp_project", None,
     "[Optional] Project name for the Cloud TPU-enabled project. If not "
     "specified, we will attempt to automatically detect the GCE project from "
     "metadata.")
 
-flags.DEFINE_bool("do_eval",True, "Whether to run eval on the dev set.")
+flags.DEFINE_bool("do_eval", True, "Whether to run eval on the dev set.")
 
-flags.DEFINE_bool("do_predict",False, "Whether to run the model in inference mode on the test set.")
+flags.DEFINE_bool("do_predict", False, "Whether to run the model in inference mode on the test set.")
 
-flags.DEFINE_integer("train_batch_size", 8, "Total batch size for training.")
+flags.DEFINE_integer("train_batch_size", 4, "Total batch size for training.")
 
-flags.DEFINE_integer("eval_batch_size", 8, "Total batch size for eval.")
+flags.DEFINE_integer("eval_batch_size", 4, "Total batch size for eval.")
 
-flags.DEFINE_integer("predict_batch_size", 8, "Total batch size for predict.")
+flags.DEFINE_integer("predict_batch_size", 4, "Total batch size for predict.")
 
-flags.DEFINE_float("learning_rate", 5e-5, "The initial learning rate for Adam.")
+flags.DEFINE_float("learning_rate", 5e-3, "The initial learning rate for Adam.")
 
-flags.DEFINE_float("num_train_epochs", 20.0, "Total number of training epochs to perform.")
+flags.DEFINE_float("num_train_epochs", 10.0, "Total number of training epochs to perform.")
 flags.DEFINE_float('droupout_rate', 0.5, 'Dropout rate')
 flags.DEFINE_float('clip', 5, 'Gradient clip')
 flags.DEFINE_float(
@@ -139,31 +144,100 @@ flags.DEFINE_integer("iterations_per_loop", 1000,
 flags.DEFINE_string("vocab_file", os.path.join(bert_path, 'vocab.txt'),
                     "The vocabulary file that the BERT model was trained on.")
 
-flags.DEFINE_string("master", None, "[Optional] TensorFlow master URL.")
+tf.flags.DEFINE_string("master", None, "[Optional] TensorFlow master URL.")
 flags.DEFINE_integer(
     "num_tpu_cores", 8,
     "Only used if `use_tpu` is True. Total number of TPU cores to use.")
-flags.DEFINE_string('data_config_path', os.path.join(project_path, 'data.conf'),
+flags.DEFINE_string('data_config_path', os.path.join(root_path, 'data.conf'),
                     'data config file, which save train and dev config')
 
 
-class PaddingInputExample(object):
-  """Fake example so the num input examples is a multiple of the batch size.
-  When running eval/predict on the TPU, we need to pad the number of examples
-  to be a multiple of the batch size, because the TPU requires a fixed batch
-  size. The alternative is to drop the last batch, which is bad because it means
-  the entire output data won't be generated.
-  We use this class instead of `None` because treating `None` as padding
-  battches could cause silent errors.
-  """
-  # def __init__(self):
-  #   self.text_a = ''
-  #   self.text_b = ''
-  #   # self.labels = labels
+# from bert_classification import ai_const_production as ai_const
+import glob
+import json
+# import unidecode
+
+
+# def get_data_dictionary_from_excel_linhlt(excel_file):
+#     print("READING_FILE", excel_file)
+#     xl = pd.ExcelFile(excel_file)
+#     df = xl.parse('SE result')
+#     df.dropna(subset=["Sentence"], inplace=True)
+#     folder1s = df["Folder1"].values
+#     folder2s = df["Folder2"].values
+#     files = df["File"].values
+#     tags = df["Tag"].values
+#     tags = [unicodedata.normalize('NFKC', re.sub('＊|\*|\s+', '', x)).lower() if type(x) == str else x for x in tags]
+#     # tags = [re.sub('\s+','',x) for x in tags]
+#     is_titles = df["Is_title"].values
+#     is_tables = df["Is_table"].values
+#     values = df["Value"].values
+#     sentences = df["Sentence"].values
+#     all_titles = df["Titles"].values
+#     is_tag11_done=False
+#     for i, x in enumerate(all_titles):
+#         try:
+#             if type(x)==str:
+#                 x = re.sub(',\s*\]', ']', x)
+#                 x = re.sub(';\"', '\"', x)
+#                 x = re.sub(',\"\s*\"','","',x)
+#                 x = re.sub(',\s*,', ',', x)
+#
+#                 all_titles[i] = json.loads(x, strict=False)
+#             else:
+#                 all_titles[i] =[]
+#         except Exception:
+#             # all_titles[i] = []
+#             print("line_err", i, x)
+#             raise
+#     X_sent=[]
+#     X_title=[]
+#     Y=[]
+#     for i, sentence in enumerate(sentences):
+#         # print("LINE_NUMBER",i)
+#         # if i == 16 or i == 17:
+#         #     print("DEBUG")
+#         titles = all_titles[i]
+#         current_tags = tags[i].split(';') if type(tags[i]) == str else []
+#         current_tags = [x for x in current_tags if len(re.sub('\s+', '', x)) > 0]
+#         # current_in_tags = [x for x in current_tags if x in ai_const.all_tags]
+#         # current_not_in_tags= [x for x in current_tags if x not in current_in_tags]
+#         # current_not_in_tags= random.sample( current_not_in_tags, 2* len(current_in_tags))
+#         # current_tags= current_in_tags+ current_not_in_tags
+#         if len(current_tags)==0:
+#             continue
+#         # curr_sentence="".join(titles)+sentence
+#         X_sent.append(sentence)
+#         if len(titles)>0:
+#             X_title.append("".join(titles))
+#         else:
+#             X_title.append(sentence)
+#         Y.append(current_tags)
+#     print("LEN TRAINING: ", len(X_sent))
+#     return X_sent, X_title, Y
+
+# def get_data_dictionary_from_folder_linhlt(excel_folder):
+#     X_sent=[]
+#     X_title=[]
+#     Y=[]
+#     excel_file_paths = glob.glob(excel_folder + '/**/*.xlsx', recursive=True)
+#     for i,excel_file in enumerate(excel_file_paths):
+#         if '.xlsx.xlsx' not in excel_file:
+#             try:
+#                 x_sent, x_title, y=get_data_dictionary_from_excel_linhlt(excel_file)
+#                 X_sent.extend(x_sent)
+#                 X_title.extend(x_title)
+#                 Y.extend(y)
+#             except:
+#                 print('ERROR FILE: ', excel_file)
+#     return X_sent, X_title, Y
+
 class InputExample(object):
   """A single training/test example for simple sequence classification."""
-  def __init__(self, guid, text_a, text_b, labels=None,entity1=None,entity2=None):
+
+  def __init__(self, guid, text_a,text_b, labels=None):
     """Constructs a InputExample.
+
     Args:
       guid: Unique id for the example.
       text_a: string. The untokenized text of the first sequence. For single
@@ -177,23 +251,17 @@ class InputExample(object):
     self.text_a = text_a
     self.text_b = text_b
     self.labels = labels
-    # self.entity1=entity1
-    # self.entity2=entity2
+
+
 
 class InputFeatures(object):
   """A single set of features of data."""
 
-  def __init__(self,
-               input_ids,
-               input_mask,
-               segment_ids,
-               label_ids,
-               is_real_example=True):
+  def __init__(self, input_ids, input_mask, segment_ids, label_ids):
     self.input_ids = input_ids
     self.input_mask = input_mask
     self.segment_ids = segment_ids
     self.label_ids = label_ids
-    self.is_real_example = is_real_example
 
 
 class DataProcessor(object):
@@ -203,33 +271,36 @@ class DataProcessor(object):
     """Gets a collection of `InputExample`s for the train set."""
     raise NotImplementedError()
 
-  def get_dev_examples(self, data_dir):
-    """Gets a collection of `InputExample`s for the dev set."""
-    raise NotImplementedError()
-
-  def get_test_examples(self, data_dir):
-    """Gets a collection of `InputExample`s for prediction."""
-    raise NotImplementedError()
+  # def get_dev_examples(self, data_dir):
+  #   """Gets a collection of `InputExample`s for the dev set."""
+  #   raise NotImplementedError()
+  #
+  # def get_test_examples(self, data_dir):
+  #   """Gets a collection of `InputExample`s for prediction."""
+  #   raise NotImplementedError()
 
   def get_labels(self):
     """Gets the list of labels for this data set."""
     raise NotImplementedError()
 
   @classmethod
-  def _read_csv(self, data_dir):
-      """Reads a tab separated value file."""
-      y = []
-      X1 = []
-      X2 = []
-      # EN1=[]
-      # EN2=[]
-      df = pd.read_csv(data_dir, sep='\t', encoding='utf-8', error_bad_lines=False)
-      for i in df.index:
+  def _read_csv(cls, data_dir):
+    """Reads a tab separated value file."""
+    y = []
+    X1 = []
+    X2 = []
+    print(data_dir)
+    df = pd.read_csv(data_dir, sep='\t', encoding='utf-8', error_bad_lines=False,engine='python')
+    for i in df.index:
         y.append(str(int(df['is_duplicate'][i])))
         X1.append(str(df['question1'][i]))
         X2.append(str(df['question2'][i]))
 
-      return (X1, X2, y)
+    return (X1, X2, y)
+
+  # def read_kepco_multilabel(self,excel_folder):
+  #     return get_data_dictionary_from_folder_linhlt(excel_folder)
+
 
 
 class UlandProcessor(DataProcessor):
@@ -342,7 +413,6 @@ class UlandProcessor(DataProcessor):
     def get_labels(self):
         """See base class."""
         return ['1', '0']
-
 def convert_to_k_hot(labels, num_labels):
     # print("NUM LABEL: ", num_labels)
     labels_=[]
@@ -353,7 +423,8 @@ def convert_to_k_hot(labels, num_labels):
             labels_.append(0)
     return labels_
 
-def convert_single_example( example:InputExample, label_list, max_seq_length,tokenizer):
+def convert_single_example( example:InputExample, label_list, max_seq_length,
+                           tokenizer):
   """Converts a single `InputExample` into a single `InputFeatures`."""
   label_map = {}
   for (i, label) in enumerate(label_list):
@@ -545,7 +616,7 @@ def _truncate_seq_pair(tokens_a, tokens_b, max_length):
 def create_model(bert_config, is_training, input_ids, input_mask, segment_ids,
                  labels, num_labels, use_one_hot_embeddings):
   """Creates a classification model."""
-  model = modeling_tf2.BertModel(
+  model = modeling.BertModel(
       config=bert_config,
       is_training=is_training,
       input_ids=input_ids,
@@ -666,7 +737,7 @@ def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
     scaffold_fn = None
     if init_checkpoint:
       (assignment_map, initialized_variable_names
-      ) = modeling_tf2.get_assignment_map_from_checkpoint(tvars, init_checkpoint)
+      ) = modeling.get_assignment_map_from_checkpoint(tvars, init_checkpoint)
       if use_tpu:
 
         def tpu_scaffold():
@@ -688,7 +759,7 @@ def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
     output_spec = None
     if mode == tf.estimator.ModeKeys.TRAIN:
 
-      train_op = optimization_tf2.create_optimizer(
+      train_op = optimization.create_optimizer(
           total_loss, learning_rate, num_train_steps, num_warmup_steps, use_tpu)
 
       output_spec = tf.contrib.tpu.TPUEstimatorSpec(
@@ -804,7 +875,7 @@ def main():
     raise ValueError(
         "At least one of `do_train`, `do_eval` or `do_predict' must be True.")
 
-  bert_config = modeling_tf2.BertConfig.from_json_file(FLAGS.bert_config_file)
+  bert_config = modeling.BertConfig.from_json_file(FLAGS.bert_config_file)
 
   if FLAGS.max_seq_length > bert_config.max_position_embeddings:
     raise ValueError(
@@ -895,7 +966,7 @@ import re
 class BertMultilabelClassifier(object):
     def __init__(self):
         tf.reset_default_graph()
-        bert_config = modeling_tf2.BertConfig.from_json_file(FLAGS.bert_config_file)
+        bert_config = modeling.BertConfig.from_json_file(FLAGS.bert_config_file)
         init_checkpoint = FLAGS.init_checkpoint
         self.use_one_hot_embeddings = False
         self.processor= UlandProcessor()
@@ -927,7 +998,7 @@ class BertMultilabelClassifier(object):
 
     def create_model(self,bert_config, is_training, input_ids, input_mask, segment_ids, num_labels, use_one_hot_embeddings):
         """Creates a classification model."""
-        model = modeling_tf2.BertModel(
+        model = modeling.BertModel(
             config=bert_config,
             is_training=is_training,
             input_ids=input_ids,
@@ -1020,7 +1091,7 @@ class BertMultilabelClassifier(object):
 
     def init_checkpoint(self, init_checkpoint):
         tvars = tf.trainable_variables()
-        (assignment_map, initialized_variable_names) = modeling_tf2.get_assignment_map_from_checkpoint(tvars,
+        (assignment_map, initialized_variable_names) = modeling.get_assignment_map_from_checkpoint(tvars,
                                                                                                    init_checkpoint)
         tf.train.init_from_checkpoint(init_checkpoint, assignment_map)
         pass
