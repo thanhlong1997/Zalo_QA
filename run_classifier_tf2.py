@@ -83,7 +83,7 @@ flags.DEFINE_bool(
 )
 
 flags.DEFINE_integer(
-    "max_seq_length", 512,
+    "max_seq_length", 128,
     "The maximum total input sequence length after WordPiece tokenization."
 )
 
