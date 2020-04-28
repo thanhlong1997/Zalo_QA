@@ -353,7 +353,7 @@ def convert_to_k_hot(labels, num_labels):
             labels_.append(0)
     return labels_
 
-def convert_single_example( example:InputExample, label_list, max_seq_length,
+def convert_single_example(ex_index, example:InputExample, label_list, max_seq_length,
                            tokenizer):
   """Converts a single `InputExample` into a single `InputFeatures`."""
   label_map = {}
@@ -430,15 +430,15 @@ def convert_single_example( example:InputExample, label_list, max_seq_length,
   # except:
   #   print(label_map)
   #   1/0
-  # if ex_index < 5:
-  #   tf.logging.info("*** Example ***")
-  #   tf.logging.info("guid: %s" % (example.guid))
-  #   tf.logging.info("tokens: %s" % " ".join(
-  #       [tokenization.printable_text(x) for x in tokens]))
-  #   tf.logging.info("input_ids: %s" % " ".join([str(x) for x in input_ids]))
-  #   tf.logging.info("input_mask: %s" % " ".join([str(x) for x in input_mask]))
-  #   tf.logging.info("segment_ids: %s" % " ".join([str(x) for x in segment_ids]))
-  #   tf.logging.info("label: %s (id = %d)" % (example.labels, label_ids))
+  if ex_index < 5:
+    tf.logging.info("*** Example ***")
+    tf.logging.info("guid: %s" % (example.guid))
+    tf.logging.info("tokens: %s" % " ".join(
+        [tokenization.printable_text(x) for x in tokens]))
+    tf.logging.info("input_ids: %s" % " ".join([str(x) for x in input_ids]))
+    tf.logging.info("input_mask: %s" % " ".join([str(x) for x in input_mask]))
+    tf.logging.info("segment_ids: %s" % " ".join([str(x) for x in segment_ids]))
+    tf.logging.info("label: %s (id = %d)" % (example.labels, label_ids))
 
   feature = InputFeatures(
       input_ids=input_ids,
