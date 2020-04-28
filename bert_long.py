@@ -546,7 +546,7 @@ def _truncate_seq_pair(tokens_a, tokens_b, max_length):
 def create_model(bert_config, is_training, input_ids, input_mask, segment_ids,
                  labels, num_labels, use_one_hot_embeddings):
   """Creates a classification model."""
-  model = modeling.BertModel(
+  model = modeling_tf2.BertModel(
       config=bert_config,
       is_training=is_training,
       input_ids=input_ids,
@@ -667,7 +667,7 @@ def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
     scaffold_fn = None
     if init_checkpoint:
       (assignment_map, initialized_variable_names
-      ) = modeling.get_assignment_map_from_checkpoint(tvars, init_checkpoint)
+      ) = modeling_tf2.get_assignment_map_from_checkpoint(tvars, init_checkpoint)
       if use_tpu:
 
         def tpu_scaffold():
@@ -689,7 +689,7 @@ def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
     output_spec = None
     if mode == tf.estimator.ModeKeys.TRAIN:
 
-      train_op = optimization.create_optimizer(
+      train_op = optimization_tf2.create_optimizer(
           total_loss, learning_rate, num_train_steps, num_warmup_steps, use_tpu)
 
       output_spec = tf.contrib.tpu.TPUEstimatorSpec(
@@ -805,7 +805,7 @@ def main():
     raise ValueError(
         "At least one of `do_train`, `do_eval` or `do_predict' must be True.")
 
-  bert_config = modeling.BertConfig.from_json_file(FLAGS.bert_config_file)
+  bert_config = modeling_tf2.BertConfig.from_json_file(FLAGS.bert_config_file)
 
   if FLAGS.max_seq_length > bert_config.max_position_embeddings:
     raise ValueError(
@@ -896,7 +896,7 @@ import re
 class BertMultilabelClassifier(object):
     def __init__(self):
         tf.reset_default_graph()
-        bert_config = modeling.BertConfig.from_json_file(FLAGS.bert_config_file)
+        bert_config = modeling_tf2.BertConfig.from_json_file(FLAGS.bert_config_file)
         init_checkpoint = FLAGS.init_checkpoint
         self.use_one_hot_embeddings = False
         self.processor= UlandProcessor()
@@ -928,7 +928,7 @@ class BertMultilabelClassifier(object):
 
     def create_model(self,bert_config, is_training, input_ids, input_mask, segment_ids, num_labels, use_one_hot_embeddings):
         """Creates a classification model."""
-        model = modeling.BertModel(
+        model = modeling_tf2.BertModel(
             config=bert_config,
             is_training=is_training,
             input_ids=input_ids,
@@ -1021,7 +1021,7 @@ class BertMultilabelClassifier(object):
 
     def init_checkpoint(self, init_checkpoint):
         tvars = tf.trainable_variables()
-        (assignment_map, initialized_variable_names) = modeling.get_assignment_map_from_checkpoint(tvars,
+        (assignment_map, initialized_variable_names) = modeling_tf2.get_assignment_map_from_checkpoint(tvars,
                                                                                                    init_checkpoint)
         tf.train.init_from_checkpoint(init_checkpoint, assignment_map)
         pass
