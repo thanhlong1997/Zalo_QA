@@ -850,7 +850,7 @@ def main():
   if FLAGS.do_train:
     processor = processors[task_name]()
     label_list = processor.get_labels()
-    tf.io.gfile.MakeDirs(FLAGS.output_dir)
+    # tf.io.gfile.MakeDirs(FLAGS.output_dir)
     train_examples = processor.get_train_examples(FLAGS.data_dir)
     num_train_steps = int(
         len(train_examples) / FLAGS.train_batch_size * FLAGS.num_train_epochs)
@@ -868,7 +868,7 @@ def main():
 
   # If TPU is not available, this will fall back to normal Estimator on CPU
   # or GPU.
-  estimator = tf.compat.v1.contrib.tpu.TPUEstimator(
+  estimator = tf.compat.v1.estimator.tpu.TPUEstimator(
       use_tpu=FLAGS.use_tpu,
       model_fn=model_fn,
       config=run_config,
