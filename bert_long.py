@@ -587,25 +587,25 @@ def create_model(bert_config, is_training, input_ids, input_mask, segment_ids,
             first_token_tensor,
             bert_config.hidden_size,
             activation=tf.tanh,
-            kernel_initializer=tf.truncated_normal_initializer(bert_config.initializer_range))
+            kernel_initializer=tf.compat.v1.truncated_normal_initializer(bert_config.initializer_range))
     second_ebeding= tf.compat.v1.layers.dense(
             second_token_tensor,
             bert_config.hidden_size,
             activation=tf.tanh,
-            kernel_initializer=tf.truncated_normal_initializer(bert_config.initializer_range))
+            kernel_initializer=tf.compat.v1.truncated_normal_initializer(bert_config.initializer_range))
     # second_ebeding= tf.Print(second_ebeding, [second_ebeding])?
 
-    output_layer= tf.concat(values=[first_ebeding, second_ebeding], axis=1)
+    output_layer= tf.compat.v1.concat(values=[first_ebeding, second_ebeding], axis=1)
 
   hidden_size = 2* bert_config.hidden_size#output_layer.shape[-1].value
 
   with tf.compat.v1.variable_scope("sent_a"):
-    output_weights = tf.get_variable(
+    output_weights = tf.compat.v1.get_variable(
       "output_weights", [num_labels, hidden_size],
-      initializer=tf.truncated_normal_initializer(stddev=0.02))
+      initializer=tf.compat.v1.truncated_normal_initializer(stddev=0.02))
 
-    output_bias = tf.get_variable(
-      "output_bias", [num_labels], initializer=tf.zeros_initializer())
+    output_bias = tf.compat.v1.get_variable(
+      "output_bias", [num_labels], initializer=tf.compat.v1.zeros_initializer())
 
 
 
