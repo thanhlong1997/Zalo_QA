@@ -45,6 +45,7 @@ print(base)
 # bert_path = 'gs://test_bucket_share_1/uncased_L-12_H-768_A-12'
 # input=os.path.join(base,'/../input/bertpretrained')
 input='/kaggle/input/bertpretrained'
+input2='/kaggle/input/zalo-add-squad'
 # output=os.path.join(base,'/../output')
 output='/kaggle/output'
 bert_path=os.path.join(input,'multi_cased_L-12_H-768_A-12/multi_cased_L-12_H-768_A-12')
@@ -83,7 +84,7 @@ flags.DEFINE_bool(
 )
 
 flags.DEFINE_integer(
-    "max_seq_length", 128,
+    "max_seq_length", 256,
     "The maximum total input sequence length after WordPiece tokenization."
 )
 
@@ -233,15 +234,15 @@ class DataProcessor(object):
 
 
 class UlandProcessor(DataProcessor):
-    """Processor for the XNLI data set."""
+    """Processor for the XNLI data set.   """
 
     def get_train_examples(self, data_dir):
         """See base class."""
-        print('PATH', os.path.join(data_dir, 'train_new.json'))
+        print('PATH', os.path.join(input2, 'zalo_short.json'))
         X1 = []
         X2 = []
         Y=[]
-        with open(os.path.join(data_dir,'train_new.json'), 'r', encoding='utf-8') as json_file:
+        with open(os.path.join(input2,'zalo_short.json'), 'r', encoding='utf-8') as json_file:
             data = json.load(json_file)
         for i in range(len(data)):
             if data[i]['label'] == True:
